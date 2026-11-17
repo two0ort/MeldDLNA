@@ -115,6 +115,7 @@ import com.metrolist.music.models.MediaMetadata
 import com.metrolist.music.ui.component.ActionPromptDialog
 import com.metrolist.music.ui.component.BottomSheet
 import com.metrolist.music.ui.component.BottomSheetState
+import com.metrolist.music.ui.component.DlnaCastBottomSheet
 import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.MediaMetadataListItem
@@ -226,6 +227,7 @@ fun Queue(
 
     val coroutineScope = rememberCoroutineScope()
     var showSleepTimerDialog by remember { mutableStateOf(false) }
+    var showDlnaDialog by remember { mutableStateOf(false) }
     val sleepTimerDefault by rememberPreference(SleepTimerDefaultKey, 30f)
     var sleepTimerValue by remember { mutableFloatStateOf(sleepTimerDefault) }
     val isAtDefault by remember {
@@ -288,7 +290,7 @@ fun Queue(
                             bottomEnd = 3.dp,
                         )
                     val middleShape = RoundedCornerShape(3.dp)
-                    val repeatShape =
+                    val endShape =
                         RoundedCornerShape(
                             topStart = 3.dp,
                             bottomStart = 3.dp,
@@ -372,7 +374,24 @@ fun Queue(
                         },
                         isActive = repeatMode != Player.REPEAT_MODE_OFF,
                         enabled = !isListenTogetherGuest,
-                        shape = repeatShape,
+                        shape = middleShape,
+                        modifier = Modifier.size(buttonSize),
+                        textButtonColor = textButtonColor,
+                        iconButtonColor = iconButtonColor,
+                        iconSize = iconSize,
+                        textBackgroundColor = TextBackgroundColor,
+                        playerBackground = playerBackground,
+                    )
+
+                    val dlnaHandler = playerConnection.service.dlnaConnectionHandler
+                    val isDlnaCasting by dlnaHandler?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
+                    PlayerQueueButton(
+                        icon = if (isDlnaCasting) R.drawable.cast_connected else R.drawable.cast,
+                        onClick = {
+                            showDlnaDialog = true
+                        },
+                        isActive = isDlnaCasting,
+                        shape = endShape,
                         modifier = Modifier.size(buttonSize),
                         textButtonColor = textButtonColor,
                         iconButtonColor = iconButtonColor,
@@ -536,7 +555,44 @@ fun Queue(
                             )
                         }
                     }
+
+                    val dlnaHandlerOld = playerConnection.service.dlnaConnectionHandler
+                    val isDlnaCastingOld by dlnaHandlerOld?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
+                    TextButton(
+                        onClick = {
+                            showDlnaDialog = true
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(
+                                painter = painterResource(id = if (isDlnaCastingOld) R.drawable.cast_connected else R.drawable.cast),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = if (isDlnaCastingOld) MaterialTheme.colorScheme.primary else TextBackgroundColor,
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(R.string.dlna_cast),
+                                color = if (isDlnaCastingOld) MaterialTheme.colorScheme.primary else TextBackgroundColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.basicMarquee(),
+                            )
+                        }
+                    }
                 }
+            }
+
+            if (showDlnaDialog) {
+                DlnaCastBottomSheet(
+                    onDismiss = { showDlnaDialog = false },
+                )
             }
 
             if (showSleepTimerDialog) {

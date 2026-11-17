@@ -189,6 +189,9 @@ val DiscordUserStatusKey = stringPreferencesKey("discordUserStatus")
 // Google Cast
 val EnableGoogleCastKey = booleanPreferencesKey("enableGoogleCast")
 
+// DLNA / UPnP Cast
+val EnableDlnaKey = booleanPreferencesKey("enableDlna")
+
 // Listen Together
 val ListenTogetherServerUrlKey = stringPreferencesKey("listenTogetherServerUrl")
 val ListenTogetherUsernameKey = stringPreferencesKey("listenTogetherUsername")

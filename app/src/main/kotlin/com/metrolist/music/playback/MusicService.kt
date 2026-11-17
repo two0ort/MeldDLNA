@@ -604,6 +604,9 @@ class MusicService :
     var castConnectionHandler: CastConnectionHandler? = null
         private set
 
+    var dlnaConnectionHandler: com.metrolist.music.playback.dlna.DlnaConnectionHandler? = null
+        private set
+
     private val screenStateReceiver =
         object : BroadcastReceiver() {
             override fun onReceive(
@@ -2823,6 +2826,13 @@ class MusicService :
                 if (!navigated) {
                     castConnectionHandler?.loadMedia(metadata)
                 }
+            }
+        }
+
+        if (dlnaConnectionHandler?.isCasting?.value == true && mediaItem != null) {
+            val metadata = mediaItem.metadata
+            if (metadata != null) {
+                dlnaConnectionHandler?.loadMedia(metadata)
             }
         }
 
@@ -5178,6 +5188,7 @@ class MusicService :
         }
         audioManager.unregisterAudioDeviceCallback(audioDeviceCallback)
         castConnectionHandler?.release()
+        dlnaConnectionHandler?.release()
         if (dataStore.get(PersistentQueueKey, true)) {
             saveQueueToDiskBlocking()
         }
@@ -5232,6 +5243,9 @@ class MusicService :
             runCatching {
                 if (castConnectionHandler?.isCasting?.value == true) {
                     castConnectionHandler?.disconnect()
+                }
+                if (dlnaConnectionHandler?.isCasting?.value == true) {
+                    dlnaConnectionHandler?.disconnect()
                 }
                 player.stop()
                 ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -5785,9 +5799,10 @@ class MusicService :
         }
 
     /**
-     * Initialize Google Cast support
+     * Initialize Google Cast & DLNA support
      */
     private fun initializeCast() {
+        dlnaConnectionHandler = com.metrolist.music.playback.dlna.DlnaConnectionHandler(this, scope, this)
         if (dataStore.get(com.metrolist.music.constants.EnableGoogleCastKey, true)) {
             try {
                 castConnectionHandler = CastConnectionHandler(this, scope, this)

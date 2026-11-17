@@ -150,8 +150,16 @@ class PlayerConnection(
             isPlaying,
             service.castConnectionHandler?.isCasting ?: MutableStateFlow(false),
             service.castConnectionHandler?.castIsPlaying ?: MutableStateFlow(false),
-        ) { localPlaying, isCasting, castPlaying ->
-            if (isCasting) castPlaying else localPlaying
+            service.dlnaConnectionHandler?.isCasting ?: MutableStateFlow(false),
+            service.dlnaConnectionHandler?.castIsPlaying ?: MutableStateFlow(false),
+        ) { localPlaying, isCasting, castPlaying, isDlnaCasting, dlnaPlaying ->
+            if (isDlnaCasting) {
+                dlnaPlaying
+            } else if (isCasting) {
+                castPlaying
+            } else {
+                localPlaying
+            }
         }.stateIn(
             scope,
             SharingStarted.Lazily,
@@ -346,6 +354,15 @@ class PlayerConnection(
     fun togglePlayPause() {
         if (!allowInternalSync && shouldBlockPlaybackChanges?.invoke() == true) return
         try {
+            val dlnaHandler = service.dlnaConnectionHandler
+            if (dlnaHandler?.isCasting?.value == true) {
+                if (dlnaHandler.castIsPlaying.value) {
+                    dlnaHandler.pause()
+                } else {
+                    dlnaHandler.play()
+                }
+                return
+            }
             val castHandler = service.castConnectionHandler
             if (castHandler?.isCasting?.value == true) {
                 if (castHandler.castIsPlaying.value) {
@@ -366,6 +383,11 @@ class PlayerConnection(
      */
     fun play() {
         try {
+            val dlnaHandler = service.dlnaConnectionHandler
+            if (dlnaHandler?.isCasting?.value == true) {
+                dlnaHandler.play()
+                return
+            }
             val castHandler = service.castConnectionHandler
             if (castHandler?.isCasting?.value == true) {
                 castHandler.play()
@@ -385,6 +407,11 @@ class PlayerConnection(
      */
     fun pause() {
         try {
+            val dlnaHandler = service.dlnaConnectionHandler
+            if (dlnaHandler?.isCasting?.value == true) {
+                dlnaHandler.pause()
+                return
+            }
             val castHandler = service.castConnectionHandler
             if (castHandler?.isCasting?.value == true) {
                 castHandler.pause()
@@ -401,6 +428,11 @@ class PlayerConnection(
      */
     fun seekTo(position: Long) {
         try {
+            val dlnaHandler = service.dlnaConnectionHandler
+            if (dlnaHandler?.isCasting?.value == true) {
+                dlnaHandler.seekTo(position)
+                return
+            }
             val castHandler = service.castConnectionHandler
             if (castHandler?.isCasting?.value == true) {
                 castHandler.seekTo(position)
@@ -414,6 +446,11 @@ class PlayerConnection(
 
     fun seekToNext() {
         try {
+            val dlnaHandler = service.dlnaConnectionHandler
+            if (dlnaHandler?.isCasting?.value == true) {
+                dlnaHandler.skipToNext()
+                return
+            }
             // When casting, use Cast skip instead of local player
             val castHandler = service.castConnectionHandler
             if (castHandler?.isCasting?.value == true) {
@@ -435,6 +472,11 @@ class PlayerConnection(
 
     fun seekToPrevious() {
         try {
+            val dlnaHandler = service.dlnaConnectionHandler
+            if (dlnaHandler?.isCasting?.value == true) {
+                dlnaHandler.skipToPrevious()
+                return
+            }
             // When casting, use Cast skip instead of local player
             val castHandler = service.castConnectionHandler
             if (castHandler?.isCasting?.value == true) {

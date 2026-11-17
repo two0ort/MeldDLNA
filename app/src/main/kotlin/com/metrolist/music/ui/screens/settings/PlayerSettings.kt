@@ -51,6 +51,7 @@ import com.metrolist.music.constants.AutoRadioQueueKey
 import com.metrolist.music.constants.AutoSkipNextOnErrorKey
 import com.metrolist.music.constants.AutoplayKey
 import com.metrolist.music.constants.DisableLoadMoreWhenRepeatAllKey
+import com.metrolist.music.constants.EnableDlnaKey
 import com.metrolist.music.constants.EnableGoogleCastKey
 import com.metrolist.music.constants.HistoryDuration
 import com.metrolist.music.constants.KeepScreenOn
@@ -155,6 +156,11 @@ fun PlayerSettings(
 
     val (enableGoogleCast, onEnableGoogleCastChange) = rememberPreference(
         key = EnableGoogleCastKey,
+        defaultValue = true
+    )
+
+    val (enableDlna, onEnableDlnaChange) = rememberPreference(
+        key = EnableDlnaKey,
         defaultValue = true
     )
 
@@ -571,6 +577,27 @@ fun PlayerSettings(
                         onClick = { onEnableGoogleCastChange(!enableGoogleCast) }
                     ))
                 }
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.cast),
+                    title = { Text(stringResource(R.string.dlna_cast)) },
+                    description = { Text(stringResource(R.string.dlna_cast_description)) },
+                    trailingContent = {
+                        Switch(
+                            checked = enableDlna,
+                            onCheckedChange = onEnableDlnaChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (enableDlna) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onEnableDlnaChange(!enableDlna) }
+                ))
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.arrow_forward),
                     title = { Text(stringResource(R.string.seek_seconds_addup)) },

@@ -331,7 +331,7 @@ fun BottomSheetPlayer(
     val listenTogetherRoleState = listenTogetherManager?.role?.collectAsStateWithLifecycle(initialValue = RoomRole.NONE)
     val isListenTogetherGuest = listenTogetherRoleState?.value == RoomRole.GUEST
 
-    // Cast state - safely access castConnectionHandler to prevent crashes during service lifecycle changes
+    // Cast state - safely access castConnectionHandler and dlnaConnectionHandler to prevent crashes during service lifecycle changes
     val castHandler =
         remember(playerConnection) {
             try {
@@ -340,10 +340,21 @@ fun BottomSheetPlayer(
                 null
             }
         }
-    val isCasting by castHandler?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
-    val castPosition by castHandler?.castPosition?.collectAsStateWithLifecycle() ?: remember { mutableLongStateOf(0L) }
-    val castDuration by castHandler?.castDuration?.collectAsStateWithLifecycle() ?: remember { mutableLongStateOf(0L) }
-    val castIsPlaying by castHandler?.castIsPlaying?.collectAsState() ?: remember { mutableStateOf(false) }
+    val dlnaHandler =
+        remember(playerConnection) {
+            try {
+                playerConnection.service.dlnaConnectionHandler
+            } catch (e: Exception) {
+                null
+            }
+        }
+    val isGmsCasting by castHandler?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
+    val isDlnaCasting by dlnaHandler?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
+    val isCasting = isGmsCasting || isDlnaCasting
+
+    val castPosition by (if (isDlnaCasting) dlnaHandler?.castPosition else castHandler?.castPosition)?.collectAsStateWithLifecycle() ?: remember { mutableLongStateOf(0L) }
+    val castDuration by (if (isDlnaCasting) dlnaHandler?.castDuration else castHandler?.castDuration)?.collectAsStateWithLifecycle() ?: remember { mutableLongStateOf(0L) }
+    val castIsPlaying by (if (isDlnaCasting) dlnaHandler?.castIsPlaying else castHandler?.castIsPlaying)?.collectAsState() ?: remember { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
 
@@ -1382,7 +1393,7 @@ fun BottomSheetPlayer(
                             if (!isListenTogetherGuest) {
                                 sliderPosition?.let {
                                     if (isCasting) {
-                                        castHandler?.seekTo(it)
+                                        playerConnection.seekTo(it)
                                         lastManualSeekTime = System.currentTimeMillis()
                                     } else {
                                         playerConnection.player.seekTo(it)
@@ -1409,7 +1420,7 @@ fun BottomSheetPlayer(
                             onValueChangeFinished = {
                                 sliderPosition?.let {
                                     if (isCasting) {
-                                        castHandler?.seekTo(it)
+                                        playerConnection.seekTo(it)
                                         lastManualSeekTime = System.currentTimeMillis()
                                     } else {
                                         playerConnection.player.seekTo(it)
@@ -1432,7 +1443,7 @@ fun BottomSheetPlayer(
                             onValueChangeFinished = {
                                 sliderPosition?.let {
                                     if (isCasting) {
-                                        castHandler?.seekTo(it)
+                                        playerConnection.seekTo(it)
                                         lastManualSeekTime = System.currentTimeMillis()
                                     } else {
                                         playerConnection.player.seekTo(it)
@@ -1461,7 +1472,7 @@ fun BottomSheetPlayer(
                             if (!isListenTogetherGuest) {
                                 sliderPosition?.let {
                                     if (isCasting) {
-                                        castHandler?.seekTo(it)
+                                        playerConnection.seekTo(it)
                                         lastManualSeekTime = System.currentTimeMillis()
                                     } else {
                                         playerConnection.player.seekTo(it)
@@ -1617,13 +1628,7 @@ fun BottomSheetPlayer(
                                         playerConnection.toggleMute()
                                         return@FilledIconButton
                                     }
-                                    if (isCasting) {
-                                        if (castIsPlaying) {
-                                            castHandler?.pause()
-                                        } else {
-                                            castHandler?.play()
-                                        }
-                                    } else if (playbackState == STATE_ENDED) {
+                                    if (playbackState == STATE_ENDED && !isCasting) {
                                         playerConnection.player.seekTo(0, 0)
                                         playerConnection.player.playWhenReady = true
                                     } else {
@@ -1760,17 +1765,11 @@ fun BottomSheetPlayer(
                                                 playerConnection.toggleMute()
                                                 return@clickable
                                             }
-                                            if (isCasting) {
-                                                if (castIsPlaying) {
-                                                    castHandler?.pause()
-                                                } else {
-                                                    castHandler?.play()
-                                                }
-                                            } else if (playbackState == STATE_ENDED) {
+                                            if (playbackState == STATE_ENDED && !isCasting) {
                                                 playerConnection.player.seekTo(0, 0)
                                                 playerConnection.player.playWhenReady = true
                                             } else {
-                                                playerConnection.player.togglePlayPause()
+                                                playerConnection.togglePlayPause()
                                             }
                                         }
                                         .focusRequester(focusRequester),

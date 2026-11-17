@@ -400,6 +400,18 @@
     <string name="google_cast">Google Cast</string>
     <string name="google_cast_description">Cast audio to Chromecast and other Cast-enabled devices</string>
 
+    <!-- DLNA / UPnP Cast -->
+    <string name="dlna_cast">Cast / DLNA</string>
+    <string name="dlna_cast_description">Stream music to DLNA/UPnP compatible TVs, speakers, and receivers</string>
+    <string name="dlna_device_picker_title">Cast to Device</string>
+    <string name="dlna_scanning">Searching for DLNA devices…</string>
+    <string name="dlna_connected_to">Streaming to %1$s</string>
+    <string name="dlna_disconnect">Disconnect / Play on Phone</string>
+    <string name="dlna_no_devices_found">No DLNA devices found. Make sure your devices are on the same Wi-Fi network.</string>
+    <string name="dlna_volume">Volume</string>
+    <string name="dlna_rescan">Scan for devices</string>
+    <string name="dlna_available_devices">Available devices</string>
+
     <string name="lyrics_romanize_as_main">Show romanized lyrics as main</string>
 
     <string name="integrations">Integrations</string>
